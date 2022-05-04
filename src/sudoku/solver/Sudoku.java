@@ -1,104 +1,58 @@
 package sudoku.solver;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
+
+//To-Do:
+//-nicht mehr mit Matrizen arbeiten
+//-nur einen Aufruf zum lösen
+//-Liste automatisch generieren
+//-Input lesen
 
 public class Sudoku {
 	
-	ArrayList[][] possibilities;
-	HashSet<int[][]> alrdProcessed = new HashSet<>();
 	Random rand = new Random();
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws FileNotFoundException {
 		
-		
-//		int[][] solMat =  { { 4, 1, 0, 0, 6, 0, 0, 7, 0 }, 
-//							{ 0, 0, 3, 0, 8, 5, 0, 0, 9 }, 
-//							{ 0, 2, 0, 3, 7, 0, 5, 0, 1 },
-//							{ 0, 3, 0, 6, 0, 9, 2, 5, 0 }, 
-//							{ 6, 0, 0, 5, 0, 1, 0, 0, 0 }, 
-//							{ 0, 0, 9, 0, 2, 0, 0, 0, 3 },
-//							{ 0, 0, 6, 2, 0, 0, 7, 4, 5 }, 
-//							{ 0, 0, 0, 4, 0, 6, 8, 0, 0 }, 
-//							{ 2, 8, 4, 0, 0, 0, 1, 9, 6 } };
-		
-		int[][] solMat =  {{0,7,0,0,0,5,0,0,0},
-							{5,0,0,7,0,2,0,0,0},
-							{0,3,0,0,8,0,0,7,0},
-							{0,9,0,0,6,0,7,5,8},
-							{0,0,0,0,3,0,0,0,0},
-							{0,0,5,0,0,0,4,0,6},
-							{0,0,9,0,0,0,6,0,5},
-							{0,0,0,0,0,8,0,2,1},
-							{8,0,0,0,9,0,0,0,0}	};
-		
-//		int[][] solMat = {{1,2,3,4,5,6,7,8,9},
-//						 {6,7,8,9,1,2,3,4,5},
-//						 {2,3,4,5,6,7,8,9,1},
-//						 {7,8,9,1,2,3,4,5,6},
-//						 {3,4,5,6,7,8,9,1,2},
-//						 {8,9,1,2,3,4,5,6,7},
-//						 {4,5,6,7,8,9,1,2,3},
-//						 {9,1,2,3,4,5,6,7,8},
-//						 {0,6,7,8,9,1,2,3,4}};
-		
-		
-		
+				
 		
 		
 		Sudoku sudoku = new Sudoku();
-		int[][] out = sudoku.solver(solMat, sudoku.possibilities);
-		out = sudoku.recursiveSudoku(out, sudoku.possibilities);
-		//sudoku.possGoThrough(solMat, sudoku.possibilities);
-		
-		
-		
-//		ArrayList[][] test = sudoku.copy2dArrayList(sudoku.possibilities);
-//		
-//		for(int i = 0; i < 9; i++) {
-//			for(int j = 0; j < 9; j++) {
-//				System.out.print(sudoku.possibilities[i][j].toString() + " , ");
-//			}
-//			System.out.println();
-//		}
-//		
-//		System.out.println();
-//		
-//		for(int i = 0; i < 9; i++) {
-//			for(int j = 0; j < 9; j++) {
-//				System.out.print(test[i][j].toString() + " , ");
-//			}
-//			System.out.println();
-//		}
-		
-		print2dArray(out);
+		ArrayList[][] possibilities = sudoku.getInput(new File("input.txt"));
+		sudoku.print2dArrayList(possibilities);
+
 		
 		
 	}
 	
-//	constructor (fills the possibilities matrix)
-	public Sudoku() {
-		
-		this.possibilities = new ArrayList[9][9];
+
+	
+	public ArrayList[][] getInput(File input) throws FileNotFoundException {
+		ArrayList[][] out = new ArrayList[9][9];
+		Scanner fileScanner = new Scanner(input);
 		
 		for(int i = 0; i < 9; i++) {
+			String currentLine = fileScanner.nextLine();
+			char[] charLine = currentLine.toCharArray();
 			for(int j = 0; j < 9; j++) {
-				ArrayList<Integer> newList = new ArrayList<>();
-				for(int k = 0; k < 9; k++) {
-					newList.add(k+1);
+				if(charLine[j] == '0') {
+					out[i][j] = new ArrayList<>(Arrays.asList(1,2,3,4,5,6,7,8,9));
+				} else {
+					out[i][j] = new ArrayList<>(Arrays.asList(charLine[j]));
 				}
-				
-				this.possibilities[i][j] = newList;
-				
 			}
 		}
 		
-		
+		return out;
 	}
-	
 	
 	public int[][] solver(int[][] mat, ArrayList[][] poss){
 		boolean change = true;
@@ -112,7 +66,7 @@ public class Sudoku {
 			newPoss = adjustDefRowCol(current, newPoss);
 			newPoss = adjustDefSquare(current, newPoss);
 			
-			current = checkPoss(current, newPoss);
+			current = filler(current, newPoss);
 			
 			change = changes(old, current);
 			
@@ -120,6 +74,7 @@ public class Sudoku {
 		
 		return current;
 	}
+	
 	
 	public int[][] recursiveSudoku(int[][] mat, ArrayList[][] poss) {
 		
@@ -135,7 +90,7 @@ public class Sudoku {
 		
 		for(int i = 0; i < 9; i++) {
 			for(int j = 0; j < 9; j++) {
-				if(mat1[i][j] == 0) {
+				if(poss[i][j].size() > 1 ) {
 					x = j;
 					y = i;
 					stop = true;
@@ -147,21 +102,49 @@ public class Sudoku {
 			}
 		}
 		
-
-		for(int i = 0; i < poss[y][x].size(); i++) {
-			mat1[y][x] = (int) poss[y][x].get(i);
-			int[][] mat2 = solver(mat1, newPoss);
-			
-			if(legal(mat2)) {
-				return mat1;
-			} else {
-				return recursiveSudoku(mat1, newPoss);
-			}	
+		
+		for(int i = 0; i < newPoss[y][x].size(); i++) {
+			mat1[y][x] = (int) newPoss[y][x].get(i);
+	
+			if(helper(mat1, poss) != null) {
+				return helper(mat1, poss);
+			}
 		}
 		
 		return null;
 	}
 	
+	public int[][] helper(int[][] mat, ArrayList[][] poss){
+		ArrayList[][] poss1 = copy2dArrayList(poss);
+		int[][] mat1 = solver(mat, poss1);
+		
+		
+		if(solved(mat1)) {
+			if(legal(mat1)) {
+				return mat1;
+			} else {
+				return null;
+			}
+		} else {
+			return recursiveSudoku(mat1, poss1);
+		}
+		
+	}
+	
+	
+	public int[][] filler(int [][] mat, ArrayList[][] poss){
+		int[][] out = copy2dArray(mat);
+		
+		for(int i = 0; i < 9; i++) {
+			for(int j = 0; j < 9; j++) {
+				if(poss[i][j].size() == 1) {
+					out[i][j] = (int) poss[i][j].get(0);
+				}
+			}
+		}
+		
+		return out;
+	}
 	
 //	goes through the alrd filled-in numbers and calls adjustPoss whenever u is not 0, with the coordinates X, Y and u
 	public ArrayList<Integer>[][] adjustDefRowCol(int[][] mat, ArrayList[][] poss) {
@@ -197,33 +180,20 @@ public class Sudoku {
 		return newPoss;
 	}
 	
-	public int[][] processed(int[][] mat){
-		int[][] current = randomSol(mat);
-		
-//		while(this.alrdProcessed.contains(current)) {
-//			current = randomSol(mat);
-//		}
-//		
-//		this.alrdProcessed.add(current);
-		
-		return current;
-	}
 	
 //	removes the integer u from every column and row, except from the original position
 	public ArrayList<Integer>[][] adjustPoss(int x, int y, Integer u, ArrayList[][] poss) {
-		
-		ArrayList[][] newPoss = copy2dArrayList(poss);
 		
 		for(int i = 0; i < 9; i++) {
 			for(int j = 0; j < 9; j++) {
 				if(i == y || j == x) {
 					if(i == y && j == x) {
-						if(newPoss[i][j].size() > 1) {
-							newPoss[i][j].removeIf(n -> (n != u));
+						if(poss[i][j].size() > 1) {
+							poss[i][j].removeIf(n -> (n != u));
 						}
 					} else {
-						if(newPoss[i][j].size() > 1) {
-							newPoss[i][j].removeIf(n -> (n == u));
+						if(poss[i][j].size() > 1) {
+							poss[i][j].removeIf(n -> (n == u));
 						}
 						
 					}
@@ -231,7 +201,7 @@ public class Sudoku {
 			}
 		}
 		
-		return newPoss;
+		return poss;
 		
 	}
 	
@@ -242,35 +212,21 @@ public class Sudoku {
 		int xStart = startingCoordinates(square, "x");
 		int yStart = startingCoordinates(square, "y");
 		
-		ArrayList[][] newPoss = copy2dArrayList(poss);
-		
 		for(int i = yStart; i < yStart+3; i++) {
 			for(int j = xStart; j < xStart+3; j++) {
-					if(newPoss[i][j].size() > 1) {
+					if(poss[i][j].size() > 1) {
 						if(i == y && j == x) {
-							newPoss[i][j].removeIf(n -> (n != u));
+							poss[i][j].removeIf(n -> (n != u));
 						} else {
-							newPoss[i][j].removeIf(n -> (n == u));
+							poss[i][j].removeIf(n -> (n == u));
 						}
 					}
 			}
 		}
 		
-		return newPoss;		
+		return poss;		
 	}
-	
-//	goes through the possibility-Matrix, and wherever it is only one possibility, it fills it in the out-Matrix
-	public int[][] checkPoss(int[][] mat, ArrayList[][] poss){
-		for(int i = 0; i < 9; i++) {
-			for(int j = 0; j < 9; j++) {
-				if(poss[i][j].size() == 1) {
-					mat[i][j] = (int) poss[i][j].get(0);
-				}
-			}
-		}
-		
-		return mat;
-	}
+
 	
 //	checks if there were any adjustments to the matrix
 	public boolean changes(int[][] matOld, int[][] matNew) {
@@ -355,25 +311,18 @@ public class Sudoku {
 		return newPoss;
 	}
 	
-//	creates a random solution for the sudoku (the rules get tested in an other step)
-	public int[][] randomSol(int [][] mat){
-		int[][] out = new int[9][9];
-		
-		for (int i = 0; i < 9; i++) {
-			for (int j = 0; j < 9; j++) {
+	
+	
+	public boolean solved(int[][] mat) {
+		for(int i = 0; i < 9; i++) {
+			for(int j = 0; j < 9; j++) {
 				if(mat[i][j] == 0) {
-					int maxBound = this.possibilities[i][j].size();
-					int randIndex = rand.nextInt(maxBound);
-					int randElement = (int) this.possibilities[i][j].get(randIndex);
-					out[i][j] = randElement;
-				} else {
-					out[i][j] = mat[i][j];
+					return false;
 				}
-				
 			}
 		}
 		
-		return out;
+		return true;
 	}
 	
 //	checks if a given 9x9 matrix is legal according to sudoku rules
@@ -405,10 +354,10 @@ public class Sudoku {
 		int[] count = new int[9];
 		
 		for(int i = yStart; i < yStart+3; i++) {
-			for(int j = xStart; j < xStart+3; j++) {
+			for(int j = xStart; j < xStart+3; j++) { 
 				if(mat[i][j] == 0) {
 					return false;
-				} 
+				}
 				count[(mat[i][j]) - 1] += 1;
 			}
 		}
@@ -459,6 +408,15 @@ public class Sudoku {
 		return true;
 	}
 
+	static void print2dArrayList(ArrayList[][] list) {
+		for(int i = 0; i < 9; i++) {
+			for(int j = 0; j < 9; j++) {
+				System.out.print(list[i][j].toString() + " , ");
+			}
+			System.out.println();
+		}
+	}
+	
 	static void print2dArray(int[][] array) {
 
 		String[][] strings = new String[array.length][];
