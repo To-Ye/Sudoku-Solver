@@ -10,11 +10,7 @@ import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
 
-//To-Do:
-//-nicht mehr mit Matrizen arbeiten
-//-nur einen Aufruf zum lösen
-//-Liste automatisch generieren
-//-Input lesen
+
 
 public class Sudoku {
 	
@@ -26,14 +22,28 @@ public class Sudoku {
 		
 		
 		Sudoku sudoku = new Sudoku();
-		ArrayList[][] possibilities = sudoku.getInput(new File("input.txt"));
-		sudoku.print2dArrayList(possibilities);
-
+		sudoku.solve();
+		
+		
+		
 		
 		
 	}
 	
 
+	
+	public void solve() throws FileNotFoundException {
+		ArrayList[][] possibilities = getInput(new File("input.txt"));
+		ezLogic(possibilities);
+		
+		if (solved(possibilities)) {
+			printResult(possibilities);
+		} else {
+//			printResult(recursiveSudoku(possibilities));
+			System.out.println("too hard :-(");
+		}
+		
+	}
 	
 	public ArrayList[][] getInput(File input) throws FileNotFoundException {
 		ArrayList[][] out = new ArrayList[9][9];
@@ -46,7 +56,7 @@ public class Sudoku {
 				if(charLine[j] == '0') {
 					out[i][j] = new ArrayList<>(Arrays.asList(1,2,3,4,5,6,7,8,9));
 				} else {
-					out[i][j] = new ArrayList<>(Arrays.asList(charLine[j]));
+					out[i][j] = new ArrayList<>(Arrays.asList(Character.getNumericValue(charLine[j])));
 				}
 			}
 		}
@@ -54,47 +64,75 @@ public class Sudoku {
 		return out;
 	}
 	
-	public int[][] solver(int[][] mat, ArrayList[][] poss){
+	
+	
+	public void ezLogic(ArrayList[][] poss){
 		boolean change = true;
-		int[][] current = copy2dArray(mat);
-		ArrayList[][] newPoss = copy2dArrayList(poss);
+//		ArrayList[][] newPoss = copy2dArrayList(poss);
+		ArrayList[][] old = null;	
+		
+		int count = 20;
+		
+		while(count > 0) {
 			
-		while(change) {
+//			old = copy2dArrayList(poss);
 			
-			int[][] old = copy2dArray(current);
-			
-			newPoss = adjustDefRowCol(current, newPoss);
-			newPoss = adjustDefSquare(current, newPoss);
-			
-			current = filler(current, newPoss);
-			
-			change = changes(old, current);
-			
+			adjustDefRowCol(poss);
+			adjustDefSquare(poss);
+						
+//			change = change(old, poss);
+			count--;
 		}
 		
-		return current;
 	}
 	
 	
-	public int[][] recursiveSudoku(int[][] mat, ArrayList[][] poss) {
+	public ArrayList[][] recursiveSudoku(ArrayList[][] poss) {
 		
-		int[][] mat1 = copy2dArray(mat);
+		int x = minList(poss, "x");
+		int y = minList(poss, "y");
 		
-		ArrayList[][] newPoss = copy2dArrayList(poss);
+		if(x == -1 || y == -1) {
+			return null;
+		}
+		
+		for(int i = 0; i < poss[y][x].size(); i++) {
+			int temp = (int) poss[y][x].get(i);
+			ArrayList[][] newPoss = copy2dArrayList(poss);
+			newPoss[y][x] = new ArrayList<>(Arrays.asList(temp));
+			ezLogic(newPoss);
+			if(solved(newPoss)) {
+				if(legal(newPoss)) {
+					return newPoss;
+				}
+			} else {
+				return recursiveSudoku(newPoss);
+			}
+		}
+		
+		return null;
 		
 		
+	}
+	
+	public int minList(ArrayList[][] list, String value) {
 		int x = -1;
 		int y = -1;
-		
+		int minSize = Integer.MAX_VALUE;
 		boolean stop = false;
 		
 		for(int i = 0; i < 9; i++) {
 			for(int j = 0; j < 9; j++) {
-				if(poss[i][j].size() > 1 ) {
+				if(list[i][j].size() == 2) {
 					x = j;
 					y = i;
 					stop = true;
 					break;
+				}
+				
+				if( (list[i][j].size() > 1) && (list[i][j].size() < minSize) ) {
+					x = j;
+					y = i;
 				}
 			}
 			if(stop) {
@@ -102,111 +140,73 @@ public class Sudoku {
 			}
 		}
 		
-		
-		for(int i = 0; i < newPoss[y][x].size(); i++) {
-			mat1[y][x] = (int) newPoss[y][x].get(i);
-	
-			if(helper(mat1, poss) != null) {
-				return helper(mat1, poss);
-			}
+		if(value.equals("x")) {
+			return x;
 		}
 		
-		return null;
+		return y;
 	}
 	
-	public int[][] helper(int[][] mat, ArrayList[][] poss){
-		ArrayList[][] poss1 = copy2dArrayList(poss);
-		int[][] mat1 = solver(mat, poss1);
-		
-		
-		if(solved(mat1)) {
-			if(legal(mat1)) {
-				return mat1;
-			} else {
-				return null;
-			}
-		} else {
-			return recursiveSudoku(mat1, poss1);
-		}
-		
-	}
+
 	
-	
-	public int[][] filler(int [][] mat, ArrayList[][] poss){
-		int[][] out = copy2dArray(mat);
+//	goes through the alrd filled-in numbers and calls adjustPoss whenever u is not 0, with the coordinates X, Y and u
+	public void adjustDefRowCol(ArrayList[][] poss) {
+		
+		ArrayList[][] newPoss = copy2dArrayList(poss);
 		
 		for(int i = 0; i < 9; i++) {
 			for(int j = 0; j < 9; j++) {
 				if(poss[i][j].size() == 1) {
-					out[i][j] = (int) poss[i][j].get(0);
+					Integer u = (Integer) poss[i][j].get(0);
+					adjustPoss(j, i, u, poss);
 				}
 			}
 		}
 		
-		return out;
-	}
-	
-//	goes through the alrd filled-in numbers and calls adjustPoss whenever u is not 0, with the coordinates X, Y and u
-	public ArrayList<Integer>[][] adjustDefRowCol(int[][] mat, ArrayList[][] poss) {
 		
-		ArrayList[][] newPoss = copy2dArrayList(poss);
-		
-		for(int i = 0; i < 9; i++) {
-			for(int j = 0; j < 9; j++) {
-				int u = mat[i][j];
-				if(u != 0) {
-					newPoss = adjustPoss(j, i, u, newPoss);
-				}
-			}
-		}
-		
-		return newPoss;
 	}
 	
 //	goes through the alrd filled-in numbers and calls adjustSquare whenever u is not 0, with the coordinates X, Y and u
-	public ArrayList<Integer>[][] adjustDefSquare(int[][] mat, ArrayList[][] poss) {
+	public void adjustDefSquare(ArrayList[][] poss) {
 		
 		ArrayList[][] newPoss = copy2dArrayList(poss);
 		
 		for(int i = 0; i < 9; i++) {
 			for(int j = 0; j < 9; j++) {
-				int u = mat[i][j];
-				if(u != 0) {
-					newPoss = adjustSquare(j, i, u, newPoss);
+				if(poss[i][j].size() == 1) {
+					int u = (int) poss[i][j].get(0);
+					adjustSquare(j, i, u, poss);
 				}
 			}
 		}
 		
-		return newPoss;
 	}
 	
 	
 //	removes the integer u from every column and row, except from the original position
-	public ArrayList<Integer>[][] adjustPoss(int x, int y, Integer u, ArrayList[][] poss) {
+	public void adjustPoss(int x, int y, Integer u, ArrayList[][] poss) {
 		
 		for(int i = 0; i < 9; i++) {
 			for(int j = 0; j < 9; j++) {
 				if(i == y || j == x) {
 					if(i == y && j == x) {
-						if(poss[i][j].size() > 1) {
+//						if(poss[i][j].size() > 1) {
 							poss[i][j].removeIf(n -> (n != u));
-						}
+//						}
 					} else {
-						if(poss[i][j].size() > 1) {
+//						if(poss[i][j].size() > 1) {
 							poss[i][j].removeIf(n -> (n == u));
-						}
+//						}
 						
 					}
 				}
 			}
 		}
 		
-		return poss;
-		
 	}
 	
 //	removes the integer u, in the possibilities of every position in the square, except his own
-	public ArrayList<Integer>[][] adjustSquare(int x, int y, Integer u, ArrayList[][] poss) {
+	public void adjustSquare(int x, int y, Integer u, ArrayList[][] poss) {
 		int square = corresSquare(x, y);
 		
 		int xStart = startingCoordinates(square, "x");
@@ -222,18 +222,16 @@ public class Sudoku {
 						}
 					}
 			}
-		}
-		
-		return poss;		
+		}	
 	}
 
 	
 //	checks if there were any adjustments to the matrix
-	public boolean changes(int[][] matOld, int[][] matNew) {
+	public boolean change(ArrayList[][] possOld, ArrayList[][] possNew) {
 		
 		for(int i = 0; i < 9; i++) {
 			for(int j = 0; j < 9; j++) {
-				if(matOld[i][j] != matNew[i][j]) {
+				if(!possOld[i][j].equals(possNew[i][j])) {
 					return true;
 				}
 			}
@@ -311,12 +309,10 @@ public class Sudoku {
 		return newPoss;
 	}
 	
-	
-	
-	public boolean solved(int[][] mat) {
+	public boolean solved(ArrayList[][] list) {
 		for(int i = 0; i < 9; i++) {
 			for(int j = 0; j < 9; j++) {
-				if(mat[i][j] == 0) {
+				if(list[i][j].size() != 1) {
 					return false;
 				}
 			}
@@ -326,27 +322,22 @@ public class Sudoku {
 	}
 	
 //	checks if a given 9x9 matrix is legal according to sudoku rules
-	public boolean legal(int[][] mat) {		
+	public boolean legal(ArrayList[][] list) {		
 		
-		for(int i = 0; i < 9; i += 3) {
-			for(int j = 0; j < 9; j += 3) {
-				if(!squareLegal(j, i, mat)) {
+		for(int i = 0; i < 9; i++) {
+			for(int j = 0; j < 9; j++) {
+				if(list[i][j].size() == 0) {
 					return false;
 				}
 			}
 		}
 		
-		for(int i = 0; i < 9; i++) {
-			if(!rowLegal(i, mat) || !colLegal(i, mat)) {
-				return false;
-			}
-		}
-		
 		return true;
+		
 	}
 	
 //	checks if a given 3x3 Square is legal according to sudoku rules
-	public boolean squareLegal(int x, int y, int[][] mat) {
+	public boolean squareLegal(int x, int y, ArrayList[][] list) {
 		int square = corresSquare(x, y);
 		int xStart = startingCoordinates(square, "x");
 		int yStart = startingCoordinates(square, "y");
@@ -355,15 +346,14 @@ public class Sudoku {
 		
 		for(int i = yStart; i < yStart+3; i++) {
 			for(int j = xStart; j < xStart+3; j++) { 
-				if(mat[i][j] == 0) {
-					return false;
+				if(list[i][j].size() == 1) {
+					count[((int) list[i][j].get(0)) - 1] += 1;
 				}
-				count[(mat[i][j]) - 1] += 1;
 			}
 		}
 		
 		for(int i = 0; i < 9; i++) {
-			if(count[i] > 1 || count[i] < 1) {
+			if(count[i] > 1) {
 				return false;
 			}
 		}
@@ -372,16 +362,16 @@ public class Sudoku {
 	}
 	
 //	checks if a given row is legal according to sudoku rules
-	public boolean rowLegal(int row,int[][] mat) {
+	public boolean rowLegal(int row, ArrayList[][] list) {
 		int[] count = new int[9];
 		
 		
 		for(int i = 0; i < 9; i++) {
-			count[(mat[row][i])-1] += 1;
+			count[((int) list[row][i].get(0))-1] += 1;
 		}
 		
 		for(int i = 0; i < 9; i++) {
-			if(count[i] > 1 || count[i] < 1) {
+			if(count[i] > 1) {
 				return false;
 			}
 		}
@@ -390,17 +380,17 @@ public class Sudoku {
 	}
 	
 //	checks if a given column is legal according to sudoku rules
-	public boolean colLegal(int col,int[][] mat) {
+	public boolean colLegal(int col, ArrayList[][] list) {
 
 		int[] count = new int[9];
 		
 		
 		for(int i = 0; i < 9; i++) {
-			count[(mat[i][col])-1] += 1;
+			count[((int) list[i][col].get(0))-1] += 1;
 		}
 		
 		for(int i = 0; i < 9; i++) {
-			if(count[i] > 1 || count[i] < 1) {
+			if(count[i] > 1) {
 				return false;
 			}
 		}
@@ -408,10 +398,24 @@ public class Sudoku {
 		return true;
 	}
 
+	static void printResult(ArrayList[][] list) {
+		for(int i = 0; i < 9; i++) {
+			for(int j = 0; j < 9; j++) {
+				if(list[i][j].size() == 1) {
+					System.out.print(list[i][j].toString() + " , ");
+				} else {
+					System.out.print("[0]" + " , ");
+				}
+				
+			}
+			System.out.println();
+		}
+	}
+	
 	static void print2dArrayList(ArrayList[][] list) {
 		for(int i = 0; i < 9; i++) {
 			for(int j = 0; j < 9; j++) {
-				System.out.print(list[i][j].toString() + " , ");
+					System.out.print(list[i][j].toString() + " , ");
 			}
 			System.out.println();
 		}
