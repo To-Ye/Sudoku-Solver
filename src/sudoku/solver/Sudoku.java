@@ -39,7 +39,7 @@ public class Sudoku {
 		if (solved(possibilities)) {
 			printResult(possibilities);
 		} else {
-//			printResult(recursiveSudoku(possibilities));
+			//printResult(recursiveSudoku(possibilities));
 			System.out.println("too hard :-(");
 		}
 		
@@ -68,8 +68,6 @@ public class Sudoku {
 	
 	public void ezLogic(ArrayList[][] poss){
 		boolean change = true;
-//		ArrayList[][] newPoss = copy2dArrayList(poss);
-		ArrayList[][] old = null;	
 		
 		int count = 20;
 		
@@ -336,68 +334,6 @@ public class Sudoku {
 		
 	}
 	
-//	checks if a given 3x3 Square is legal according to sudoku rules
-	public boolean squareLegal(int x, int y, ArrayList[][] list) {
-		int square = corresSquare(x, y);
-		int xStart = startingCoordinates(square, "x");
-		int yStart = startingCoordinates(square, "y");
-		
-		int[] count = new int[9];
-		
-		for(int i = yStart; i < yStart+3; i++) {
-			for(int j = xStart; j < xStart+3; j++) { 
-				if(list[i][j].size() == 1) {
-					count[((int) list[i][j].get(0)) - 1] += 1;
-				}
-			}
-		}
-		
-		for(int i = 0; i < 9; i++) {
-			if(count[i] > 1) {
-				return false;
-			}
-		}
-		
-		return true;
-	}
-	
-//	checks if a given row is legal according to sudoku rules
-	public boolean rowLegal(int row, ArrayList[][] list) {
-		int[] count = new int[9];
-		
-		
-		for(int i = 0; i < 9; i++) {
-			count[((int) list[row][i].get(0))-1] += 1;
-		}
-		
-		for(int i = 0; i < 9; i++) {
-			if(count[i] > 1) {
-				return false;
-			}
-		}
-		
-		return true;
-	}
-	
-//	checks if a given column is legal according to sudoku rules
-	public boolean colLegal(int col, ArrayList[][] list) {
-
-		int[] count = new int[9];
-		
-		
-		for(int i = 0; i < 9; i++) {
-			count[((int) list[i][col].get(0))-1] += 1;
-		}
-		
-		for(int i = 0; i < 9; i++) {
-			if(count[i] > 1) {
-				return false;
-			}
-		}
-		
-		return true;
-	}
-
 	static void printResult(ArrayList[][] list) {
 		for(int i = 0; i < 9; i++) {
 			for(int j = 0; j < 9; j++) {
