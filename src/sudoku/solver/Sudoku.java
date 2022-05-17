@@ -17,34 +17,39 @@ public class Sudoku {
 	Random rand = new Random();
 	
 	public static void main(String[] args) throws FileNotFoundException {
-		
-				
-		
-		
+
 		Sudoku sudoku = new Sudoku();
 		sudoku.solve();
-		
-		
-		
-		
-		
-	}
-	
 
-	
+	}
+
 	public void solve() throws FileNotFoundException {
 		ArrayList[][] possibilities = getInput(new File("input.txt"));
 		ezLogic(possibilities);
-		
+
 		if (solved(possibilities)) {
 			printResult(possibilities);
 		} else {
-			//printResult(recursiveSudoku(possibilities));
-			System.out.println("too hard :-(");
+			printResult(recursiveSudoku(possibilities));
+			//System.out.println("too hard :-(");
 		}
-		
 	}
-	
+
+	public int HashSum(ArrayList[][] mat){
+		int sum = 0;
+
+		for(int i = 0; i < 9; i++){
+			for(int j = 0; j < 9; j++){
+				ArrayList<Integer> current = mat[i][j];
+				for(int x : current){
+					sum += x;
+				}
+			}
+		}
+
+		return sum;
+	}
+
 	public ArrayList[][] getInput(File input) throws FileNotFoundException {
 		ArrayList[][] out = new ArrayList[9][9];
 		Scanner fileScanner = new Scanner(input);
@@ -64,31 +69,25 @@ public class Sudoku {
 		return out;
 	}
 	
-	
-	
 	public void ezLogic(ArrayList[][] poss){
 		boolean change = true;
-		
-		int count = 20;
-		
-		while(count > 0) {
-			
-//			old = copy2dArrayList(poss);
+
+		while(change) {
+
+			ArrayList<Integer>[][] old = copy2dArrayList(poss);
 			
 			adjustDefRowCol(poss);
 			adjustDefSquare(poss);
 						
-//			change = change(old, poss);
-			count--;
+			change = change(old, poss);
 		}
 		
 	}
-	
-	
+
 	public ArrayList[][] recursiveSudoku(ArrayList[][] poss) {
 		
-		int x = minList(poss, "x");
-		int y = minList(poss, "y");
+		int x = minList(poss)[0];
+		int y = minList(poss)[1];
 		
 		if(x == -1 || y == -1) {
 			return null;
@@ -109,28 +108,26 @@ public class Sudoku {
 		}
 		
 		return null;
-		
-		
 	}
 	
-	public int minList(ArrayList[][] list, String value) {
-		int x = -1;
-		int y = -1;
+	public int[] minList(ArrayList[][] list) {
+		int[] out = new int[2];
+
 		int minSize = Integer.MAX_VALUE;
 		boolean stop = false;
 		
 		for(int i = 0; i < 9; i++) {
 			for(int j = 0; j < 9; j++) {
 				if(list[i][j].size() == 2) {
-					x = j;
-					y = i;
+					out[0] = j;
+					out[1] = i;
 					stop = true;
 					break;
 				}
 				
 				if( (list[i][j].size() > 1) && (list[i][j].size() < minSize) ) {
-					x = j;
-					y = i;
+					out[0] = j;
+					out[1] = i;
 				}
 			}
 			if(stop) {
@@ -138,15 +135,9 @@ public class Sudoku {
 			}
 		}
 		
-		if(value.equals("x")) {
-			return x;
-		}
-		
-		return y;
+		return out;
 	}
-	
 
-	
 //	goes through the alrd filled-in numbers and calls adjustPoss whenever u is not 0, with the coordinates X, Y and u
 	public void adjustDefRowCol(ArrayList[][] poss) {
 		
@@ -179,8 +170,7 @@ public class Sudoku {
 		}
 		
 	}
-	
-	
+
 //	removes the integer u from every column and row, except from the original position
 	public void adjustPoss(int x, int y, Integer u, ArrayList[][] poss) {
 		
@@ -223,19 +213,36 @@ public class Sudoku {
 		}	
 	}
 
-	
 //	checks if there were any adjustments to the matrix
 	public boolean change(ArrayList[][] possOld, ArrayList[][] possNew) {
 		
 		for(int i = 0; i < 9; i++) {
 			for(int j = 0; j < 9; j++) {
-				if(!possOld[i][j].equals(possNew[i][j])) {
+				if(possOld[i][j].size() != possNew[i][j].size()) {
 					return true;
 				}
+
+				for(int k = 0; k < possOld[i][j].size(); k++){
+					if(possOld[i][j].get(k) != possNew[i][j].get(k)) {
+						return true;
+					}
+				}
+
+
 			}
 		}
 		
 		return false;
+	}
+
+	public int listSum(ArrayList<Integer> list){
+		int sum = 0;
+
+		for(int x : list){
+			sum += x;
+		}
+
+		return sum;
 	}
 	
 //	returns the corresponding square(1-9) to the given coordinates
@@ -300,7 +307,11 @@ public class Sudoku {
 		
 		for(int i = 0; i < 9; i++) {
 			for(int j = 0; j < 9; j++) {
-				newPoss[i][j] = poss[i][j];
+				ArrayList<Integer> current = poss[i][j];
+				newPoss[i][j] = new ArrayList<>();
+				for(int n : current) {
+					newPoss[i][j].add(n);
+				}
 			}
 		}
 		
