@@ -42,9 +42,11 @@ public class Sudoku {
 			for(int j = 0; j < 9; j++){
 				ArrayList<Integer> current = mat[i][j];
 				for(int x : current){
-					sum += x;
+					sum += x * (j+1) * (i + 1);
 				}
+				//sum = sum * (j+1) * (i+1);
 			}
+
 		}
 
 		return sum;
@@ -98,12 +100,16 @@ public class Sudoku {
 			ArrayList[][] newPoss = copy2dArrayList(poss);
 			newPoss[y][x] = new ArrayList<>(Arrays.asList(temp));
 			ezLogic(newPoss);
-			if(solved(newPoss)) {
-				if(legal(newPoss)) {
+			//printResult(newPoss);
+			if(legal(newPoss)){
+				if(solved(newPoss)){
 					return newPoss;
+				} else {
+					ArrayList[][] copy = recursiveSudoku(newPoss);
+					if(copy != null) {
+						return copy;
+					}
 				}
-			} else {
-				return recursiveSudoku(newPoss);
 			}
 		}
 		
