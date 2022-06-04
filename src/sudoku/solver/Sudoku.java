@@ -31,25 +31,7 @@ public class Sudoku {
 			printResult(possibilities);
 		} else {
 			printResult(recursiveSudoku(possibilities));
-			//System.out.println("too hard :-(");
 		}
-	}
-
-	public int HashSum(ArrayList[][] mat){
-		int sum = 0;
-
-		for(int i = 0; i < 9; i++){
-			for(int j = 0; j < 9; j++){
-				ArrayList<Integer> current = mat[i][j];
-				for(int x : current){
-					sum += x * (j+1) * (i + 1);
-				}
-				//sum = sum * (j+1) * (i+1);
-			}
-
-		}
-
-		return sum;
 	}
 
 	public ArrayList[][] getInput(File input) throws FileNotFoundException {
@@ -100,7 +82,6 @@ public class Sudoku {
 			ArrayList[][] newPoss = copy2dArrayList(poss);
 			newPoss[y][x] = new ArrayList<>(Arrays.asList(temp));
 			ezLogic(newPoss);
-			//printResult(newPoss);
 			if(legal(newPoss)){
 				if(solved(newPoss)){
 					return newPoss;
@@ -352,18 +333,33 @@ public class Sudoku {
 	}
 	
 	static void printResult(ArrayList[][] list) {
+		String trennLinie = "=============================================================================";
+		String upperRow = "||       |       |       ||       |       |       ||       |       |       ||";
+		String lowerRow = "||_______|_______|_______||_______|_______|_______||_______|_______|_______||";
+
+		System.out.println(trennLinie);
 		for(int i = 0; i < 9; i++) {
+
+			System.out.println(upperRow);
+
 			for(int j = 0; j < 9; j++) {
-				if(list[i][j].size() == 1) {
-					System.out.print(list[i][j].toString() + " , ");
+				if(j == 0 || j == 3 || j == 6){
+					System.out.print("||   " + list[i][j].get(0)+ "   ");
+				} else if (j == 8) {
+					System.out.print("|   " + list[i][j].get(0) + "   ||");
 				} else {
-					System.out.print("[0]" + " , ");
+					System.out.print("|   " + list[i][j].get(0) + "   ");
 				}
-				
 			}
 			System.out.println();
+			System.out.println(lowerRow);
+			if(i == 2 || i == 5 || i == 8 ){
+				System.out.println(trennLinie);
+			}
 		}
 	}
+
+
 	
 	static void print2dArrayList(ArrayList[][] list) {
 		for(int i = 0; i < 9; i++) {
